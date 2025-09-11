@@ -1,0 +1,89 @@
+# Intentionally failing Flux HelmRelease + HelmRepository for testing events
+# Apply with: kubectl apply -f failing-helmrelease.yaml
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: komodorio
+  namespace: test
+spec:
+  interval: 1h0m0s
+  url: https://helm-charts.komodor.io
+
+---
+
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: komoplane-12
+  namespace: test
+  # labels:
+  #   app.kubernetes.io/name: failing-release
+  #   test: flux-events
+spec:
+  interval: 5m
+  # use a chart version that almost certainly doesn't exist to force an error
+  chart:
+    spec:
+      chart: komoplane
+      # version: "14.10.0"
+      sourceRef:
+        kind: HelmRepository
+        name: komodorio
+  # make values suspicious (string where integer expected) to increase chance of template errors
+  values:
+    replicaCount: "1ol"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Hook
+metadata:
+  name: helm-release-monitoring-hook
+  namespace: test
+spec:
+  eventConfigurations:
+  - eventType: helm-release-failed
+    agentId: kagent/flux-mcp-agent
+    prompt: |
+      AUTONOMOUS MODE: A Flux HelmRelease {{.Namespace}}/{{.ResourceName}} has failed at {{.EventTime}}. Analyze the cause and provide RCA.
+
+      INSTRUCTIONS:
+      • Use all available tools to diagnose the issue
+      • Never ask for permission - assume autonomous execution
+      • Complete analysis without human approval
+      • Get cluster name from `infra-general` Kustomization label `toolkit.fluxcd.io/tenant`
+      • Provide a RCA of the issue with potential fixes and put it all into the summary field for Dynatrace
+      • Format fields to json for sending to Dynatrace:
+      ```json
+      {
+        "data": {
+            "cluster": "d2-green",
+            "env": "{{env}}", //put environment name here like 'd1', which is a prefix of the cluster name 'd1-green-aks'
+            "kind": "HelmRelease",
+            "message": "{{message}}", //put message here
+            "name": "{{resourcename}}",
+            "namespace": "{{namespace}}",
+            "reason": "{{reason}}",
+            "reportingController": "helm-controller",
+            "severity": "Warning",
+            "summary": "summary}", //put your summary here
+            "agent": "kagent/flux-mcp-agent"
+        }  
+      }
+      ```
+      and call tool dynatrace_call with this json as input
+
+# {
+#   "data": {
+#     "cluster": "d2-green",
+#     "env": "d2",
+#     "kind": "HelmRelease",
+#     "message": "No message",
+#     "name": "komoplane",
+#     "namespace": "unknown",
+#     "reason": "unknown",
+#     "reportingController": "unknown",
+#     "severity": "warning",
+#     "summary": "test"
+#   }
+# }
+
+# { "message": "No message", "severity": "warning", "name": "komoplane", "kind": "HelmRelease", "namespace": "unknown", "reason": "unknown", "reportingController": "unknown", "cluster": "d2-green", "summary": "test", "env": "d2" }
