@@ -17,6 +17,7 @@
   - Implement EventWatcher interface using Kubernetes Events API client
   - Create event filtering logic to match events against hook configurations
   - Implement event type mapping for pod-restart, pod-pending, oom-kill, and probe-failed
+  - Implement event type mapping for kustomization-failed, helm-release-failed
   - Write unit tests for event filtering and type mapping
   - _Requirements: 2.1, 2.4_
 

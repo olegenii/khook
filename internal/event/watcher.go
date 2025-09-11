@@ -250,69 +250,80 @@ func (w *Watcher) mapKubernetesEvent(k8sEvent *eventsv1.Event) *interfaces.Event
 
 // mapEventType maps Kubernetes event reasons to our event types
 func (w *Watcher) mapEventType(k8sEvent *eventsv1.Event) string {
-	// Ignore Normal events entirely; only act on warnings/errors
-	if strings.ToLower(k8sEvent.Type) == "normal" {
-		return ""
-	}
-	// Map based on the regarding object kind and event reason
-	switch k8sEvent.Regarding.Kind {
-	case "Pod":
-		return w.mapPodEventType(k8sEvent)
-	default:
-		return ""
-	}
+       // Ignore Normal events entirely; only act on warnings/errors
+       if strings.ToLower(k8sEvent.Type) == "normal" {
+	       return ""
+       }
+       // Map based on the regarding object kind and event reason
+       switch k8sEvent.Regarding.Kind {
+       case "Pod":
+	       return w.mapPodEventType(k8sEvent)
+       case "Kustomization":
+	       return w.mapKustomizationEventType(k8sEvent)
+       case "HelmRelease":
+	       return w.mapHelmReleaseEventType(k8sEvent)
+       default:
+	       return ""
+       }
 }
 
 // mapPodEventType maps pod-related events to our event types
 func (w *Watcher) mapPodEventType(k8sEvent *eventsv1.Event) string {
-	reason := strings.ToLower(k8sEvent.Reason)
-	message := strings.ToLower(k8sEvent.Note)
-	eventType := strings.ToLower(k8sEvent.Type)
+       reason := strings.ToLower(k8sEvent.Reason)
+       message := strings.ToLower(k8sEvent.Note)
+       eventType := strings.ToLower(k8sEvent.Type)
 
-	switch {
-	// OOM Kill events
-	case reason == "oomkilling" || reason == "oomkilled":
-		return "oom-kill"
-	case reason == "killing" || reason == "killed":
-		// Check if it's an OOM kill based on message
-		if strings.Contains(message, "oom") || strings.Contains(message, "out of memory") {
-			return "oom-kill"
-		}
-		return "pod-restart"
+       switch {
+       case reason == "oomkilling" || reason == "oomkilled":
+	       return "oom-kill"
+       case reason == "killing" || reason == "killed":
+	       if strings.Contains(message, "oom") || strings.Contains(message, "out of memory") {
+		       return "oom-kill"
+	       }
+	       return "pod-restart"
+       case reason == "backoff":
+	       return "pod-restart"
+       case reason == "failed" && strings.Contains(message, "container"):
+	       return "pod-restart"
+       case reason == "failedscheduling":
+	       return "pod-pending"
+       case reason == "pending" || (eventType == "warning" && strings.Contains(message, "pending")):
+	       return "pod-pending"
+       case reason == "unhealthy":
+	       if strings.Contains(message, "liveness") || strings.Contains(message, "readiness") || strings.Contains(message, "startup") {
+		       return "probe-failed"
+	       }
+       case strings.Contains(reason, "probe") && eventType == "warning":
+	       return "probe-failed"
+       case reason == "started" && strings.Contains(message, "container"):
+	       return ""
+       case reason == "created" && eventType == "normal":
+	       return ""
+       default:
+	       return ""
+       }
+       return ""
+}
 
-	// Container restart events (BackOff is the most common)
-	case reason == "backoff":
-		// "Back-off restarting failed container" indicates restart issues
-		return "pod-restart"
-	case reason == "failed" && strings.Contains(message, "container"):
-		return "pod-restart"
+// mapKustomizationEventType maps Kustomization-related events to our event types
+func (w *Watcher) mapKustomizationEventType(k8sEvent *eventsv1.Event) string {
+       reason := strings.ToLower(k8sEvent.Reason)
+       switch reason {
+       case "prunefailed", "artifactfailed", "buildfailed", "healthcheckfailed", "validationfailed":
+	       return "kustomization-failed"
+       default:
+	       return ""
+       }
+}
 
-	// Pod scheduling issues
-	case reason == "failedscheduling":
-		return "pod-pending"
-	case reason == "pending" || (eventType == "warning" && strings.Contains(message, "pending")):
-		return "pod-pending"
-
-	// Probe failures
-	case reason == "unhealthy":
-		// Probe failures typically have "Liveness probe failed", "Readiness probe failed", etc.
-		if strings.Contains(message, "liveness") || strings.Contains(message, "readiness") || strings.Contains(message, "startup") {
-			return "probe-failed"
-		}
-	case strings.Contains(reason, "probe") && eventType == "warning":
-		return "probe-failed"
-
-	// Additional restart-related events
-	case reason == "started" && strings.Contains(message, "container"):
-		// This could indicate a restart, but we might want to be more selective
-		return ""
-	case reason == "created" && eventType == "normal":
-		// Normal creation events, not necessarily restarts
-		return ""
-
-	default:
-		return ""
-	}
-
-	return ""
+// mapHelmReleaseEventType maps HelmRelease-related events to our event types
+func (w *Watcher) mapHelmReleaseEventType(k8sEvent *eventsv1.Event) string {
+       reason := strings.ToLower(k8sEvent.Reason)
+       switch reason {
+       case "installfailed", "upgradefailed", "testfailed", "rollbackfailed", "uninstallfailed", "artifactfailed", "dependencynotready":
+	       return "helm-release-failed"
+       default:
+	       return ""
+       }
+}
 }

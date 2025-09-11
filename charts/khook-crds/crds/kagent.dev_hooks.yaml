@@ -51,13 +51,15 @@ spec:
                       minLength: 1
                       type: string
                     eventType:
-                      description: EventType specifies the type of Kubernetes event
-                        to monitor
+                      description: >
+                        EventType specifies the type of Kubernetes event to monitor. Supported values: pod-restart, pod-pending, oom-kill, probe-failed, kustomization-failed, helm-release-failed
                       enum:
                       - pod-restart
                       - pod-pending
                       - oom-kill
                       - probe-failed
+                      - kustomization-failed
+                      - helm-release-failed
                       type: string
                     prompt:
                       description: Prompt specifies the prompt template to send to

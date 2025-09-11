@@ -13,7 +13,7 @@ The KAgent Hook Controller is a Kubernetes controller that enables automated res
 #### Acceptance Criteria
 
 1. WHEN a hook object is created THEN the system SHALL validate that it contains a list of event configurations, each with event type, agent identifier, and prompt template
-2. WHEN a hook object specifies event types THEN the system SHALL support pod restart, pod pending, OOM kill, and probe failed event types
+2. WHEN a hook object specifies event types THEN the system SHALL support flux kustomization failed, flux helm release failed,  pod restart, pod pending, OOM kill, and probe failed event types
 3. WHEN a hook object is deployed THEN the controller SHALL begin monitoring for all specified event types
 4. IF a hook object contains invalid event types THEN the system SHALL reject the object with appropriate error messages
 5. WHEN an event configuration is defined THEN each event type SHALL have its own agent identifier and prompt template

@@ -64,7 +64,7 @@ spec:
                   properties:
                     eventType:
                       type: string
-                      enum: ["pod-restart", "pod-pending", "oom-kill", "probe-failed"]
+                      enum: ["pod-restart", "pod-pending", "oom-kill", "probe-failed", "kustomization-failed", "helm-release-failed"]
                     agentId:
                       type: string
                     prompt:

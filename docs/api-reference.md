@@ -28,10 +28,12 @@ The Hook CRD defines the schema for configuring event monitoring and Kagent inte
 
 ##### Supported Event Types
 
-- `pod-restart`: Pod has been restarted
-- `pod-pending`: Pod is stuck in pending state  
-- `oom-kill`: Pod was killed due to out-of-memory
-- `probe-failed`: Liveness or readiness probe failed
+ - `pod-restart`: Pod has been restarted
+ - `pod-pending`: Pod is stuck in pending state
+ - `oom-kill`: Pod was killed due to out-of-memory
+ - `probe-failed`: Liveness or readiness probe failed
+ - `kustomization-failed`: Flux Kustomization failed (prune, artifact, build, health check, or validation)
+ - `helm-release-failed`: Flux HelmRelease failed (install, upgrade, test, rollback, uninstall, artifact, or dependency)
 
 ### Hook Status
 
@@ -66,7 +68,6 @@ spec:
     agentId: kagent/incident-responder
     prompt: |
       AUTONOMOUS MODE: Pod {{.ResourceName}} restarted at {{.EventTime}}. Analyze and fix immediately.
-
       INSTRUCTIONS:
       • Use all available tools to diagnose and resolve the issue
       • Annotate fixed resources with: kagentFix=<timestamp>
@@ -77,11 +78,30 @@ spec:
     agentId: kagent/memory-analyzer
     prompt: |
       AUTONOMOUS MODE: OOM kill for {{.ResourceName}}. Analyze memory and optimize immediately.
-
       INSTRUCTIONS:
       • Use all available tools to diagnose and resolve memory issues
       • Annotate fixed resources with: kagentFix=<timestamp>
       • If patching fails: delete and recreate resources
+      • Never ask for permission - assume autonomous execution
+      • Complete remediation without human approval
+  - eventType: kustomization-failed
+    agentId: kagent/flux-kustomization-responder
+    prompt: |
+      AUTONOMOUS MODE: Flux Kustomization failed for {{.ResourceName}} at {{.EventTime}}. Reason: {{.EventMessage}}. Diagnose and remediate immediately.
+      INSTRUCTIONS:
+      • Investigate the failure reason (prune, artifact, build, health check, validation)
+      • Use all available tools to resolve the issue
+      • Annotate fixed resources with: kagentFix=<timestamp>
+      • Never ask for permission - assume autonomous execution
+      • Complete remediation without human approval
+  - eventType: helm-release-failed
+    agentId: kagent/flux-helmrelease-responder
+    prompt: |
+      AUTONOMOUS MODE: Flux HelmRelease failed for {{.ResourceName}} at {{.EventTime}}. Reason: {{.EventMessage}}. Diagnose and remediate immediately.
+      INSTRUCTIONS:
+      • Investigate the failure reason (install, upgrade, test, rollback, uninstall, artifact, dependency)
+      • Use all available tools to resolve the issue
+      • Annotate fixed resources with: kagentFix=<timestamp>
       • Never ask for permission - assume autonomous execution
       • Complete remediation without human approval
 status:

@@ -24,39 +24,42 @@ import (
 )
 
 func TestHookValidation(t *testing.T) {
-	hook := &Hook{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-hook",
-			Namespace: "default",
-		},
-		Spec: HookSpec{
-			EventConfigurations: []EventConfiguration{
-				{
-					EventType: "pod-restart",
-					AgentId:   "agent-123",
-					Prompt:    "Pod has restarted",
-				},
-			},
-		},
-	}
+       eventTypes := []string{"pod-restart", "oom-kill", "probe-failed", "pod-pending", "kustomization-failed", "helm-release-failed"}
+       for _, et := range eventTypes {
+	       hook := &Hook{
+		       ObjectMeta: metav1.ObjectMeta{
+			       Name:      "test-hook-" + et,
+			       Namespace: "default",
+		       },
+		       Spec: HookSpec{
+			       EventConfigurations: []EventConfiguration{
+				       {
+					       EventType: et,
+					       AgentId:   "agent-123",
+					       Prompt:    et + " event triggered",
+				       },
+			       },
+		       },
+	       }
 
-	// Test ValidateCreate
-	_, err := hook.ValidateCreate(context.Background(), hook)
-	if err != nil {
-		t.Errorf("ValidateCreate() unexpected error = %v", err)
-	}
+	       // Test ValidateCreate
+	       _, err := hook.ValidateCreate(context.Background(), hook)
+	       if err != nil {
+		       t.Errorf("ValidateCreate() unexpected error for %s = %v", et, err)
+	       }
 
-	// Test ValidateUpdate
-	_, err = hook.ValidateUpdate(context.Background(), hook, hook)
-	if err != nil {
-		t.Errorf("ValidateUpdate() unexpected error = %v", err)
-	}
+	       // Test ValidateUpdate
+	       _, err = hook.ValidateUpdate(context.Background(), hook, hook)
+	       if err != nil {
+		       t.Errorf("ValidateUpdate() unexpected error for %s = %v", et, err)
+	       }
 
-	// Test ValidateDelete
-	_, err = hook.ValidateDelete(context.Background(), hook)
-	if err != nil {
-		t.Errorf("ValidateDelete() unexpected error = %v", err)
-	}
+	       // Test ValidateDelete
+	       _, err = hook.ValidateDelete(context.Background(), hook)
+	       if err != nil {
+		       t.Errorf("ValidateDelete() unexpected error for %s = %v", et, err)
+	       }
+       }
 }
 
 func TestHookDeepCopy(t *testing.T) {

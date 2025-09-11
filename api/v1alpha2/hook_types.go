@@ -25,7 +25,7 @@ type HookSpec struct {
 // EventConfiguration defines a single event type configuration
 type EventConfiguration struct {
 	// EventType specifies the type of Kubernetes event to monitor
-	// +kubebuilder:validation:Enum=pod-restart;pod-pending;oom-kill;probe-failed
+	// +kubebuilder:validation:Enum=pod-restart;pod-pending;oom-kill;probe-failed;kustomization-failed;helm-release-failed
 	// +kubebuilder:validation:Required
 	EventType string `json:"eventType"`
 
@@ -71,16 +71,18 @@ func (h *Hook) Validate() error {
 // validateEventConfiguration validates a single event configuration
 func (h *Hook) validateEventConfiguration(config EventConfiguration, index int) error {
 	// Validate EventType
-	validEventTypes := map[string]bool{
-		"pod-restart":  true,
-		"pod-pending":  true,
-		"oom-kill":     true,
-		"probe-failed": true,
-	}
+       validEventTypes := map[string]bool{
+	       "pod-restart":         true,
+	       "pod-pending":         true,
+	       "oom-kill":            true,
+	       "probe-failed":        true,
+	       "kustomization-failed": true,
+	       "helm-release-failed":  true,
+       }
 
-	if !validEventTypes[config.EventType] {
-		return fmt.Errorf("event configuration %d: invalid event type '%s', must be one of: pod-restart, pod-pending, oom-kill, probe-failed", index, config.EventType)
-	}
+       if !validEventTypes[config.EventType] {
+	       return fmt.Errorf("event configuration %d: invalid event type '%s', must be one of: pod-restart, pod-pending, oom-kill, probe-failed, kustomization-failed, helm-release-failed", index, config.EventType)
+       }
 
 	// Validate AgentId
 	if strings.TrimSpace(config.AgentId) == "" {

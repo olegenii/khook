@@ -18,62 +18,182 @@ import (
 func TestMapEventType(t *testing.T) {
 	watcher := &Watcher{}
 
-	tests := []struct {
-		name     string
-		event    *eventsv1.Event
-		expected string
-	}{
-		{
-			name: "pod restart - backoff reason",
-			event: &eventsv1.Event{
-				Regarding: corev1.ObjectReference{Kind: "Pod"},
-				Reason:    "BackOff",
-				Note:      "Back-off restarting failed container test in pod test_default",
-				Type:      "Warning",
-			},
-			expected: "pod-restart",
-		},
-		{
-			name: "oom kill",
-			event: &eventsv1.Event{
-				Regarding: corev1.ObjectReference{Kind: "Pod"},
-				Reason:    "OOMKilling",
-				Note:      "Memory cgroup out of memory: Killed process",
-				Type:      "Warning",
-			},
-			expected: "oom-kill",
-		},
-		{
-			name: "pod pending",
-			event: &eventsv1.Event{
-				Regarding: corev1.ObjectReference{Kind: "Pod"},
-				Reason:    "FailedScheduling",
-				Note:      "0/1 nodes are available: 1 Insufficient memory",
-				Type:      "Warning",
-			},
-			expected: "pod-pending",
-		},
-		{
-			name: "probe failed",
-			event: &eventsv1.Event{
-				Regarding: corev1.ObjectReference{Kind: "Pod"},
-				Reason:    "Unhealthy",
-				Note:      "Liveness probe failed: HTTP probe failed",
-				Type:      "Warning",
-			},
-			expected: "probe-failed",
-		},
-		{
-			name: "unrelated event",
-			event: &eventsv1.Event{
-				Regarding: corev1.ObjectReference{Kind: "Service"},
-				Reason:    "Created",
-				Note:      "Service created",
-				Type:      "Normal",
-			},
-			expected: "",
-		},
-	}
+       tests := []struct {
+	       name     string
+	       event    *eventsv1.Event
+	       expected string
+       }{
+	       {
+		       name: "pod restart - backoff reason",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Pod"},
+			       Reason:    "BackOff",
+			       Note:      "Back-off restarting failed container test in pod test_default",
+			       Type:      "Warning",
+		       },
+		       expected: "pod-restart",
+	       },
+	       {
+		       name: "oom kill",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Pod"},
+			       Reason:    "OOMKilling",
+			       Note:      "Memory cgroup out of memory: Killed process",
+			       Type:      "Warning",
+		       },
+		       expected: "oom-kill",
+	       },
+	       {
+		       name: "pod pending",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Pod"},
+			       Reason:    "FailedScheduling",
+			       Note:      "0/1 nodes are available: 1 Insufficient memory",
+			       Type:      "Warning",
+		       },
+		       expected: "pod-pending",
+	       },
+	       {
+		       name: "probe failed",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Pod"},
+			       Reason:    "Unhealthy",
+			       Note:      "Liveness probe failed: HTTP probe failed",
+			       Type:      "Warning",
+		       },
+		       expected: "probe-failed",
+	       },
+	       {
+		       name: "kustomization failed - prune",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Kustomization"},
+			       Reason:    "PruneFailed",
+			       Note:      "Pruning of the Kustomization failed",
+			       Type:      "Warning",
+		       },
+		       expected: "kustomization-failed",
+	       },
+	       {
+		       name: "kustomization failed - artifact",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Kustomization"},
+			       Reason:    "ArtifactFailed",
+			       Note:      "Artifact download of the kustomization failed",
+			       Type:      "Warning",
+		       },
+		       expected: "kustomization-failed",
+	       },
+	       {
+		       name: "kustomization failed - build",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Kustomization"},
+			       Reason:    "BuildFailed",
+			       Note:      "Kustomize build of the Kustomization failed",
+			       Type:      "Warning",
+		       },
+		       expected: "kustomization-failed",
+	       },
+	       {
+		       name: "kustomization failed - healthcheck",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Kustomization"},
+			       Reason:    "HealthCheckFailed",
+			       Note:      "Health check of the Kustomization failed",
+			       Type:      "Warning",
+		       },
+		       expected: "kustomization-failed",
+	       },
+	       {
+		       name: "kustomization failed - validation",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Kustomization"},
+			       Reason:    "ValidationFailed",
+			       Note:      "Validation of the Kustomization manifests failed",
+			       Type:      "Warning",
+		       },
+		       expected: "kustomization-failed",
+	       },
+	       {
+		       name: "helm release failed - install",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "InstallFailed",
+			       Note:      "Helm install for the HelmRelease failed",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "helm release failed - upgrade",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "UpgradeFailed",
+			       Note:      "Helm upgrade for the HelmRelease failed",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "helm release failed - test",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "TestFailed",
+			       Note:      "Helm tests for the HelmRelease failed",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "helm release failed - rollback",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "RollbackFailed",
+			       Note:      "Helm rollback for the HelmRelease failed",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "helm release failed - uninstall",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "UninstallFailed",
+			       Note:      "Helm uninstall for the HelmRelease failed",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "helm release failed - artifact",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "ArtifactFailed",
+			       Note:      "Artifact download for the HelmRelease failed",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "helm release failed - dependency not ready",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "HelmRelease"},
+			       Reason:    "DependencyNotReady",
+			       Note:      "One of the dependencies is not ready",
+			       Type:      "Warning",
+		       },
+		       expected: "helm-release-failed",
+	       },
+	       {
+		       name: "unrelated event",
+		       event: &eventsv1.Event{
+			       Regarding: corev1.ObjectReference{Kind: "Service"},
+			       Reason:    "Created",
+			       Note:      "Service created",
+			       Type:      "Normal",
+		       },
+		       expected: "",
+	       },
+       }
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
