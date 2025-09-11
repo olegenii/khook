@@ -2,9 +2,9 @@
 replicaCount: 1
 
 image:
-  repository: otomato/khook
+  repository: sapdcpplayground.azurecr.io/c5359065/khook
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "0.1.0"
 
 imagePullSecrets: []
 nameOverride: ""

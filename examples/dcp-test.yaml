@@ -15,3 +15,20 @@ spec:
       • Annotate fixed resources with: kagentFix=<timestamp>
       • Never ask for permission - assume autonomous execution
       • Complete analysis without human approval
+---
+apiVersion: kagent.dev/v1alpha2
+kind: Hook
+metadata:
+  name: kustomization-monitoring-hook
+  namespace: flux-system
+spec:
+  eventConfigurations:
+  - eventType: kustomization-failed
+    agentId: kagent/flux-mcp-agent
+    prompt: |
+      AUTONOMOUS MODE: A Flux Kustomization has failed. Analyze the cause and provide RCA.
+
+      INSTRUCTIONS:
+      • Use all available tools to diagnose and resolve the issue
+      • Never ask for permission - assume autonomous execution
+      • Complete analysis without human approval      
