@@ -326,4 +326,4 @@ func (w *Watcher) mapHelmReleaseEventType(k8sEvent *eventsv1.Event) string {
 	       return ""
        }
 }
-}
+
