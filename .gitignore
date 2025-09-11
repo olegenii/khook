@@ -23,6 +23,7 @@ go.work
 *.swp
 *.swo
 *~
+curl-mcp-server/
 
 # OS generated files
 .DS_Store
